@@ -16,10 +16,14 @@ async function run() {
         await client.connect();
         const productCollection = client.db('toolsNestBD').collection('products');
         const userCollection = client.db('toolsNestBD').collection('user');
-        app.get('/get-user', async (req, res) => {
-            const products = await userCollection.find({}).toArray();
+
+        app.get('/get-user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const products = await userCollection.findOne(query);
             res.send(products);
         });
+
         app.put('/update-user/:email', async (req, res) => {
             const email = req.params.email;
             const data = req.body;
@@ -29,6 +33,7 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, option);
             res.send(result);
         });
+
         app.get('/get-product', async (req, res) => {
             const products = await productCollection.find({}).toArray();
             res.send(products);
