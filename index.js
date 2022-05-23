@@ -15,6 +15,20 @@ async function run() {
     try {
         await client.connect();
         const productCollection = client.db('toolsNestBD').collection('products');
+        const userCollection = client.db('toolsNestBD').collection('user');
+        app.get('/get-user', async (req, res) => {
+            const products = await userCollection.find({}).toArray();
+            res.send(products);
+        });
+        app.put('/update-user/:email', async (req, res) => {
+            const email = req.params.email;
+            const data = req.body;
+            const filter = { email: email };
+            const updateDoc = { $set: data };
+            const option = { upsert: true };
+            const result = await userCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
+        });
         app.get('/get-product', async (req, res) => {
             const products = await productCollection.find({}).toArray();
             res.send(products);
