@@ -16,6 +16,7 @@ async function run() {
         await client.connect();
         const productCollection = client.db('toolsNestBD').collection('products');
         const userCollection = client.db('toolsNestBD').collection('user');
+        const reviewCollection = client.db('toolsNestBD').collection('review');
 
         app.get('/get-user/:email', async (req, res) => {
             const email = req.params.email;
@@ -53,6 +54,15 @@ async function run() {
             res.send(result);
         });
 
+        app.get('/get-review', async (req, res) => {
+            const review = await reviewCollection.find({}).toArray();
+            res.send(review);
+        });
+        app.post('/add-review', async (req, res) => {
+            const data = req.body;
+            const result = await reviewCollection.insertOne(data);
+            res.send(result);
+        });
     } finally {
     }
 }
