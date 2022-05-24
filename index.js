@@ -24,6 +24,26 @@ async function run() {
             const products = await userCollection.findOne(query);
             res.send(products);
         });
+        app.get('/all-user', async (req, res) => {
+            const user = await userCollection.find({}).toArray();
+            res.send(user);
+        });
+        app.put('/add-admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = { $set: { admin: true } };
+            const option = { upsert: true };
+            const result = await userCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
+        });
+        app.put('/remove-admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = { $set: { admin: false } };
+            const option = { upsert: true };
+            const result = await userCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
+        });
 
         app.put('/update-user/:email', async (req, res) => {
             const email = req.params.email;
