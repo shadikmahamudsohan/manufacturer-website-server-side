@@ -3,6 +3,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const verify = require('jsonwebtoken/verify');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -30,6 +31,7 @@ function verifyJWT(req, res, next) {
 async function run() {
     try {
         await client.connect();
+        console.log('connected');
         const productCollection = client.db('toolsNestBD').collection('products');
         const userCollection = client.db('toolsNestBD').collection('user');
         const reviewCollection = client.db('toolsNestBD').collection('review');
@@ -43,7 +45,7 @@ async function run() {
                 $set: user,
             };
             const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
             res.send({ result, token });
         });
 
@@ -65,12 +67,20 @@ async function run() {
             const result = await userCollection.updateOne(filter, updateDoc, option);
             res.send(result);
         });
+
         app.put('/remove-admin/:email', async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = { $set: { admin: false } };
             const option = { upsert: true };
             const result = await userCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
+        });
+
+        app.delete('/delete-product/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const find = { email: email };
+            const result = await userCollection.deleteOne(find);
             res.send(result);
         });
 
@@ -88,6 +98,19 @@ async function run() {
             const products = await productCollection.find({}).toArray();
             res.send(products);
         });
+        app.get('/get-all-product', verify, async (req, res) => {
+            const products = await productCollection.find({}).toArray();
+            res.send(products);
+        });
+
+        app.delete('/delete-product/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const find = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(find);
+            res.send(result);
+        });
+
         app.post('/add-product', verifyJWT, async (req, res) => {
             const data = req.body;
             const result = await productCollection.insertOne(data);
