@@ -3,7 +3,10 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIP_SECRET_KEY);
 const verify = require('jsonwebtoken/verify');
+
+
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -36,7 +39,21 @@ async function run() {
         const userCollection = client.db('toolsNestBD').collection('user');
         const reviewCollection = client.db('toolsNestBD').collection('review');
         const orderCollection = client.db('toolsNestBD').collection('order');
+        const paymentsCollection = client.db("doctors_portal").collection("payments");
 
+        // payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret });
+        });
+        //------
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -142,9 +159,26 @@ async function run() {
             res.send(result);
         });
 
+        app.put('/pay-order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId,
+                }
+            };
+            const option = { upsert: true };
+
+            const result = await paymentsCollection.insertOne(payment);
+            const updatedBooking = await orderCollection.updateOne(filter, updatedDoc, option);
+            res.send(updatedDoc);
+        });
+
         app.post('/add-product', verifyJWT, async (req, res) => {
             const data = req.body;
-            const result = await productCollection.insertOne(data);
+            const result = await orderCollection.insertOne(data);
             res.send(result);
         });
         // app.put('/update-product/:id', async (req, res) => {
