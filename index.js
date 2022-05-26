@@ -130,7 +130,7 @@ async function run() {
             res.send(products);
         });
 
-        app.get('/get-order', verifyJWT, async (req, res) => {
+        app.get('/get-order', async (req, res) => {
             const result = await orderCollection.find({}).toArray();
             res.send(result);
         });
@@ -141,11 +141,16 @@ async function run() {
             const result = await orderCollection.findOne(find);
             res.send(result);
         });
-
-        app.put('/update-order/:email', verifyJWT, async (req, res) => {
-            const email = req.params.email;
+        app.post('/add-order', verifyJWT, async (req, res) => {
             const data = req.body;
-            const filter = { email: email };
+            const result = await orderCollection.insertOne(data);
+            res.send(result);
+        });
+
+        app.put('/update-order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const data = req.body;
+            const filter = { _id: ObjectId(id) };
             const updateDoc = { $set: data };
             const option = { upsert: true };
             const result = await orderCollection.updateOne(filter, updateDoc, option);
