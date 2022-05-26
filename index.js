@@ -35,6 +35,7 @@ async function run() {
         const productCollection = client.db('toolsNestBD').collection('products');
         const userCollection = client.db('toolsNestBD').collection('user');
         const reviewCollection = client.db('toolsNestBD').collection('review');
+        const orderCollection = client.db('toolsNestBD').collection('order');
 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -84,6 +85,7 @@ async function run() {
             res.send(result);
         });
 
+
         app.put('/update-user/:email', async (req, res) => {
             const email = req.params.email;
             const data = req.body;
@@ -98,16 +100,45 @@ async function run() {
             const products = await productCollection.find({}).toArray();
             res.send(products);
         });
-        app.get('/get-all-product', verify, async (req, res) => {
+
+        app.get('/get-single-product/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const find = { _id: ObjectId(id) };
+            const products = await productCollection.findOne(find);
+            res.send(products);
+        });
+
+        app.get('/get-all-product', verifyJWT, async (req, res) => {
             const products = await productCollection.find({}).toArray();
             res.send(products);
         });
 
-        app.delete('/delete-product/:id', verifyJWT, async (req, res) => {
+        app.get('/get-order', verifyJWT, async (req, res) => {
+            const result = await orderCollection.find({}).toArray();
+            res.send(result);
+        });
+
+        app.get('/get-single-order/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const find = { _id: ObjectId(id) };
-            const result = await productCollection.deleteOne(find);
+            const result = await orderCollection.findOne(find);
+            res.send(result);
+        });
+
+        app.put('/update-order/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const data = req.body;
+            const filter = { email: email };
+            const updateDoc = { $set: data };
+            const option = { upsert: true };
+            const result = await orderCollection.updateOne(filter, updateDoc, option);
+            res.send(result);
+        });
+
+        app.delete('/delete-order/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const find = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(find);
             res.send(result);
         });
 
@@ -116,15 +147,15 @@ async function run() {
             const result = await productCollection.insertOne(data);
             res.send(result);
         });
-        app.put('/update-product/:id', async (req, res) => {
-            const { id } = req.params;
-            const data = req.body;
-            const filter = { _id: ObjectId(id) };
-            const updateDoc = { $set: data };
-            const option = { upsert: true };
-            const result = await productCollection.updateOne(filter, updateDoc, option);
-            res.send(result);
-        });
+        // app.put('/update-product/:id', async (req, res) => {
+        //     const { id } = req.params;
+        //     const data = req.body;
+        //     const filter = { _id: ObjectId(id) };
+        //     const updateDoc = { $set: data };
+        //     const option = { upsert: true };
+        //     const result = await productCollection.updateOne(filter, updateDoc, option);
+        //     res.send(result);
+        // });
 
         app.get('/get-review', async (req, res) => {
             const review = await reviewCollection.find({}).toArray();
