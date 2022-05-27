@@ -140,7 +140,7 @@ async function run() {
         app.get('/get-order/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const find = { email: email };
-            const result = await orderCollection.findOne(find).toArray();
+            const result = await orderCollection.find(find).toArray();
             res.send(result);
         });
 
