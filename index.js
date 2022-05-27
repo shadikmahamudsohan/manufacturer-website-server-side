@@ -130,8 +130,10 @@ async function run() {
             res.send(products);
         });
 
-        app.get('/get-order', async (req, res) => {
-            const result = await orderCollection.find({}).toArray();
+        app.get('/get-order/:email', async (req, res) => {
+            const email = req.params.email;
+            const find = { email: email };
+            const result = await orderCollection.find(find).toArray();
             res.send(result);
         });
 
@@ -183,18 +185,16 @@ async function run() {
 
         app.post('/add-product', verifyJWT, async (req, res) => {
             const data = req.body;
-            const result = await orderCollection.insertOne(data);
+            const result = await productCollection.insertOne(data);
             res.send(result);
         });
-        // app.put('/update-product/:id', async (req, res) => {
-        //     const { id } = req.params;
-        //     const data = req.body;
-        //     const filter = { _id: ObjectId(id) };
-        //     const updateDoc = { $set: data };
-        //     const option = { upsert: true };
-        //     const result = await productCollection.updateOne(filter, updateDoc, option);
-        //     res.send(result);
-        // });
+
+        app.delete('/remove-product/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const find = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(find);
+            res.send(result);
+        });
 
         app.get('/get-review', async (req, res) => {
             const review = await reviewCollection.find({}).toArray();
