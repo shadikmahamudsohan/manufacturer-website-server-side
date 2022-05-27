@@ -130,10 +130,15 @@ async function run() {
             res.send(products);
         });
 
+        app.get('/get-all-order/', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const result = await orderCollection.find({}).toArray();
+            res.send(result);
+        });
         app.get('/get-order/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const find = { email: email };
-            const result = await orderCollection.find(find).toArray();
+            const result = await orderCollection.findOne(find).toArray();
             res.send(result);
         });
 
